@@ -1,24 +1,46 @@
+#include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
-
+ 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!");
-    sf::CircleShape shape(100.f);
-    shape.setFillColor(sf::Color::Green);
-
+    // Create the main window
+    sf::RenderWindow window(sf::VideoMode({800, 600}), "SFML window");
+ 
+    // Load a sprite to display
+    const sf::Texture texture("cute_image.jpg");
+    sf::Sprite sprite(texture);
+ 
+    // Create a graphical text to display
+    const sf::Font font("arial.ttf");
+    sf::Text text(font, "Hello SFML", 50);
+ 
+    // Load a music to play
+    sf::Music music("nice_music.ogg");
+ 
+    // Play the music
+    music.play();
+ 
+    // Start the game loop
     while (window.isOpen())
     {
-        sf::Event event;
-        while (window.pollEvent(event))
+        // Process events
+        while (const std::optional event = window.pollEvent())
         {
-            if (event.type == sf::Event::Closed)
+            // Close window: exit
+            if (event->is<sf::Event::Closed>())
                 window.close();
         }
-
+ 
+        // Clear screen
         window.clear();
-        window.draw(shape);
+ 
+        // Draw the sprite
+        window.draw(sprite);
+ 
+        // Draw the string
+        window.draw(text);
+ 
+        // Update the window
         window.display();
     }
-
-    return 0;
 }
