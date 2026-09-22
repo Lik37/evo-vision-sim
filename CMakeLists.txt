@@ -9,3 +9,10 @@ find_package(SFML 3 COMPONENTS Graphics Window System REQUIRED)
 add_executable(evo-vision-sim main.cpp)
 
 target_link_libraries(evo-vision-sim PRIVATE SFML::Graphics SFML::Window SFML::System)
+
+if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/assets")
+    file(CREATE_LINK 
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets" 
+        "${CMAKE_CURRENT_BINARY_DIR}/assets" 
+        SYMBOLIC)
+endif()
