@@ -1,4 +1,4 @@
-// g++ learn.cpp -o learn -lsfml-system -lsfml-window
+// g++ learn.cpp -o learn -lsfml-system -lsfml-window -lsfml-graphics
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -323,112 +323,6 @@ namespace graphic
     }
 
 
-    void textureAndSprite1() 
-    {
-        sf::RenderWindow window; //(sf::VideoMode({800, 600}), "SFML window");
-        window.create(sf::VideoMode({800, 600}), "SFML window");
-        
-        window.setKeyRepeatEnabled(false); // важно
-
-        window.setVerticalSyncEnabled(true); //window.setFramerateLimit(60);
-
-        
-        while (window.isOpen()) {
-
-            while (std::optional event = window.pollEvent()) {
-                if (event->is<sf::Event::Closed>())
-                {
-                    window.close();
-                }
-            }
-            
-
-            // clear the window with black color
-            window.clear(sf::Color::Black);
-
-            // create a 500x500 render-texture
-            sf::RenderTexture renderTexture({500, 500});
-
-            // drawing uses the same functions
-            renderTexture.clear(sf::Color::Blue);
-            // renderTexture.draw(sprite); // or any other drawable
-            renderTexture.display();
-
-            // get the target texture (where the stuff has been drawn)
-            const sf::Texture& texture = renderTexture.getTexture();
-
-            // sf::Texture texture("image.png", false, sf::IntRect({10, 10}, {32, 32})); // Throws sf::Exception if an error occurs
-            // OR
-            // sf::Texture texture;
-            // if (!texture.loadFromFile("image.png", false, sf::IntRect({10, 10}, {32, 32}))) {} // error...
-
-            // sf::Texture texture(sf::Vector2u(200, 200)); // Throws sf::Exception if an error occurs
-            // // OR
-            // if (!texture.resize({200, 200})) {} // error...
-            
-            // update a texture from an array of pixels
-            // auto [width, height] = texture.getSize();
-            // std::vector<std::uint8_t> pixels(width * height * 4); // * 4 because pixels have 4 components (RGBA)
-            // ...
-            // texture.update(pixels.data());
-
-            // // update a texture from a sf::Image
-            // sf::Image image;
-            // ...
-            // texture.update(image);
-
-            // // update the texture from the current contents of the window
-            // sf::RenderWindow window;
-            // ...
-            // texture.update(window);
-
-            // texture.setSmooth(true); // сглаживание
-            // texture.setRepeated(true); // повторение (текстура кирпича -> стена из кирпичей)
-
-            // sf::Sprite sprite(texture);
-            // sprite.setTextureRect(sf::IntRect({10, 10}, {32, 32}));
-
-            // sprite.setColor(sf::Color(0, 255, 0)); // green
-            // sprite.setColor(sf::Color(255, 255, 255, 128)); // half transparent
-
-            // // position
-            // sprite.setPosition({10.f, 50.f}); // absolute position
-            // sprite.move({5.f, 10.f}); // offset relative to the current position
-            // // rotation
-            // sprite.setRotation(sf::degrees(90)); // absolute angle
-            // sprite.rotate(sf::degrees(14)); // offset relative to the current angle
-            // // scale
-            // sprite.setScale({0.5f, 2.f}); // absolute scale factor
-            // sprite.scale({1.5f, 3.f}); // factor relative to the current scale
-            // // starting point
-            // sprite.setOrigin({25.f, 25.f});
-            
-            // ERRORS:
-            // sf::Sprite loadSprite(const std::filesystem::path& filename)
-            // {
-            //     sf::Texture texture;
-            //     texture.loadFromFile(filename);
-
-            //     return sf::Sprite(texture);
-            // } // error: the texture is destroyed here
-            // RELLOCATE
-            // std::vector<sf::Texture> textures;
-            // auto& texture1 = textures.emplace_back("image1.png");
-            // sf::Sprite sprite1(texture1);
-            // auto& texture2 = textures.emplace_back("image2.png"); // This may reallocate!
-            // sf::Sprite sprite2(texture2);
-
-
-            // draw it to the window
-            sf::Sprite sprite(texture);
-            window.draw(sprite);
-
-            // end the current frame
-            window.display();
-        }
-    }
-    
-
     void textureAndSprite() 
     {
         // ==========================================
@@ -448,34 +342,39 @@ namespace graphic
         // 2. Получение текстуры из холста
         const sf::Texture& textureFromCanvas = renderTexture.getTexture();
 
-        // 3. Создание отдельной текстуры и изменение её размера
-        sf::Texture texture;
-        if (!texture.resize({200, 200})) 
+        // 3. Загрузка текстуры
+        sf::Texture texture; // texture(("assets/cute_image.jpg", false, sf::IntRect({10, 10}, {32, 32}));
+        if (!texture.loadFromFile("assets/cute_image.jpg", false, sf::IntRect({10, 10}, {32, 32})))
         {
-            std::cerr << "Ошибка изменения размера текстуры!\n";
-            return;
+            return; // Если файла нет, мягко выходим из функции
         }
 
         // 4. Настройка свойств текстуры (Сглаживание и Повторение)
         texture.setSmooth(true); 
         texture.setRepeated(true); 
 
-        // 5. Обновление текстуры через массив сырых пикселей (RGBA)
+        // 5. Изменение размера текстуры
+        if (!texture.resize({200, 200})) 
+        {
+            std::cerr << "Ошибка изменения размера текстуры!\n";
+            return;
+        }
+
+        // 6. Обновление текстуры через массив сырых пикселей (RGBA)
         auto [width, height] = texture.getSize();
         std::vector<std::uint8_t> pixels(width * height * 4, 255); // Заполняем белым цветом (255)
         texture.update(pixels.data());
 
-        // 6. Обновление текстуры через объект sf::Image
-        // 6. Обновление текстуры через объект sf::Image
+        // 7. Обновление текстуры через объект sf::Image
         sf::Image image;
         image.resize({width, height}, sf::Color::Red); // Метод просто создает красную картинку (возвращает void)
         texture.update(image);                         // Спокойно обновляем текстуру
 
 
-        // 7. Создание спрайта и привязка к текстуре
+        // 8. Создание спрайта и привязка к текстуре
         sf::Sprite sprite(texture);
 
-        // 8. Тонкая настройка геометрии и внешнего вида спрайта
+        // 9. Тонкая настройка геометрии и внешнего вида спрайта
         sprite.setTextureRect(sf::IntRect({10, 10}, {32, 32})); // Вырезаем кусок текстуры
         sprite.setColor(sf::Color(255, 255, 255, 128));       // Делаем полупрозрачным
 
@@ -519,10 +418,161 @@ namespace graphic
         }
     }
 
+
+    void textAndFonts() 
+    {
+        sf::Font font; // font("arial.ttf");
+        if (!font.openFromFile("assets/LiberationSans-Regular.ttf")) {
+            return;
+        }
+
+        sf::Text text(font); // a font is required to make a text object
+        text.setString("Hello world"); // L"" широкая строка для кириллицы и тп.
+        text.setCharacterSize(24); // in pixels, not points!
+        text.setFillColor(sf::Color::Red);
+        text.setStyle(sf::Text::Bold | sf::Text::Underlined);
+
+        sf::RenderWindow window; //(sf::VideoMode({800, 600}), "SFML window");
+        window.create(sf::VideoMode({800, 600}), "SFML window");
+        window.setKeyRepeatEnabled(false); // важно
+        window.setVerticalSyncEnabled(true); //window.setFramerateLimit(60);
+        
+        while (window.isOpen()) {
+
+            while (std::optional event = window.pollEvent()) {
+                if (event->is<sf::Event::Closed>())
+                {
+                    window.close();
+                }
+            }
+
+            window.clear(sf::Color::Black);
+            window.draw(text);
+            window.display();
+        }
+    }
+
+
+    class EllipseShape : public sf::Shape
+    {
+    public:
+        explicit EllipseShape(sf::Vector2f radius = {0, 0}) : m_radius(radius)
+        {
+            update();
+        }
+        void setRadius(sf::Vector2f radius)
+        {
+            m_radius = radius;
+            update();
+        }
+        sf::Vector2f getRadius() const
+        {
+            return m_radius;
+        }
+        std::size_t getPointCount() const override // нужно перепределить
+        {
+            return 30; // fixed, but could be an attribute of the class if needed
+        }
+        sf::Vector2f getPoint(std::size_t index) const override // нужно перепределить
+        {
+            static constexpr float pi = 3.141592654f;
+
+            float angle = index * 2 * pi / getPointCount() - pi / 2;
+            float x     = std::cos(angle) * m_radius.x;
+            float y     = std::sin(angle) * m_radius.y;
+
+            return m_radius + sf::Vector2f(x, y);
+        }
+    private:
+        sf::Vector2f m_radius;
+    };
+    void shapes() 
+    {   
+        sf::ContextSettings settings;
+        // settings.antiAliasingLevel = 8; // сглаживание
+        std::cout << "settings.antiAliasingLevel: ";
+        std::cin >> settings.antiAliasingLevel;
+        std::cout << "settings.antiAliasingLevel = " << settings.antiAliasingLevel << "\n";
+        sf::RenderWindow window(sf::VideoMode({800, 600}), "SFML shapes", sf::Style::Default, sf::State::Windowed, settings);
+        window.create(sf::VideoMode({800, 600}), "SFML window");
+        window.setKeyRepeatEnabled(false); // важно
+        window.setVerticalSyncEnabled(true); //window.setFramerateLimit(60);
+
+        // sf::Color::Transparent - полностью прозрачный
+
+        // circle
+        sf::CircleShape circleShape(40.f);
+        circleShape.setFillColor(sf::Color(100, 250, 50));
+        circleShape.setRadius(50.f);
+        circleShape.setPointCount(16);
+        // outline
+        circleShape.setOutlineThickness(-10.f);
+        circleShape.setOutlineColor(sf::Color(250, 150, 100));
+        // textureCircle
+        sf::CircleShape textureCircle(50);
+        sf::Texture cuteTexture("assets/cute_image.jpg");
+        textureCircle.setTexture(&cuteTexture);
+        textureCircle.setTextureRect(sf::IntRect({100, 0}, {200, 400})); // ({10, 10}, {100, 100})
+        textureCircle.setPosition({100, 0});
+        // rectangle
+        sf::RectangleShape rectangle({120.f, 50.f});
+        rectangle.setFillColor(sf::Color::Yellow);
+        rectangle.setSize({100.f, 100.f});
+        rectangle.setPosition({200, 0});
+        // shape
+        // create an empty shape
+        sf::ConvexShape convex;
+        convex.setPointCount(5);
+        // define the points
+        convex.setPoint(0, {0.f, 0.f});
+        convex.setPoint(1, {150.f, 10.f});
+        convex.setPoint(2, {120.f, 90.f});
+        convex.setPoint(3, {30.f, 100.f});
+        convex.setPoint(4, {0.f, 50.f});
+        convex.setFillColor(sf::Color::Green);
+        convex.setPosition({300, 0});
+        // line with thickness
+        sf::RectangleShape line1({150.f, 5.f});
+        line1.rotate(sf::degrees(45));
+        // line witout thickness
+        std::array line2 =
+        {
+            sf::Vertex{sf::Vector2f(10.f, 10.f)},
+            sf::Vertex{sf::Vector2f(150.f, 150.f)}
+        };
+        // ellipse
+        EllipseShape ellipse = EllipseShape({25, 50});
+        ellipse.setFillColor(sf::Color::Red);
+        ellipse.setPosition({450, 0});
+
+
+        
+        while (window.isOpen()) {
+
+            while (std::optional event = window.pollEvent()) {
+                if (event->is<sf::Event::Closed>())
+                {
+                    window.close();
+                }
+            }
+
+            window.clear(sf::Color::Black);
+            window.draw(circleShape);
+            window.draw(textureCircle);
+            window.draw(rectangle);
+            window.draw(convex);
+            window.draw(line1);
+            window.draw(line2.data(), line2.size(), sf::PrimitiveType::Lines);
+            window.draw(ellipse);
+            window.display();
+        }
+        
+    }
+
 };
 
 
 
 int main() {
-    graphic::multiThread();
+    graphic::shapes();
 }
