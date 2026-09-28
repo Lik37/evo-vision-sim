@@ -1,158 +1,153 @@
 #include "genome.h"
 
-#include <cstdint>
-#include <bitset>
-#include <random>
-#include <vector>
-#include <utility>
-#include <ostream>
+#include <cstdlib>
 
 
-enum class Patterns {
-    NONE,
-    FRIEND,
-    ENEMY
-};
 
+Color::Color(uint8_t hue) : hue(hue) {}
 
-class Color 
-{
-    uint8_t hue;
+uint8_t Color::getHue() const { return hue; }
 
-public:
+bool Color::operator==(const Color& other) const {
+    return hue == other.hue;
+}
+bool Color::operator!=(const Color& other) const {
+    return hue != other.hue;
+}
+bool Color::operator<(const Color& other) const {
+    return hue < other.hue;
+}
+bool Color::operator>(const Color& other) const {
+    return hue > other.hue;
+}
+bool Color::operator<=(const Color& other) const {
+    return hue <= other.hue;
+}
+bool Color::operator>=(const Color& other) const {
+    return hue >= other.hue;
+}
+Color Color::operator+(const Color& other) const {
+    return Color(hue + other.hue);
+}
+Color Color::operator-(const Color& other) const {
+    return Color(hue - other.hue);
+}
 
-    Color(uint8_t hue) : hue(hue) {}
-
-    uint8_t getHue() const { return hue; }
-
-
-    bool operator==(const Color& other) const {
-        return hue == other.hue;
-    }
-    bool operator!=(const Color& other) const {
-        return hue != other.hue;
-    }
-    bool operator<(const Color& other) const {
-        return hue < other.hue;
-    }
-    bool operator>(const Color& other) const {
-        return hue > other.hue;
-    }
-    bool operator<=(const Color& other) const {
-        return hue <= other.hue;
-    }
-    bool operator>=(const Color& other) const {
-        return hue >= other.hue;
-    }
-
-    Color operator+(const Color& other) const {
-        return Color(hue + other.hue);
-    }
-    Color operator-(const Color& other) const {
-        return Color(hue - other.hue);
-    }
-
-};
-
-
-class Colorset
-{
-    std::bitset<256> value;
-
-public:
-    Colorset() : value() {}
-
-    Colorset(const std::bitset<256> &value) : value(value) {}
-
-    Colorset(const std::vector<std::pair<Color, Color>> &areas) {
-        for (auto area : areas) {
-            for (Color c = area.first; c < area.second; c = c + 1) {
-                add(Color(c));
-            }
-            add(Color(area.second));
-        }
-    }
-
-
-    bool get(const Color &color) const {
-        return value[color.getHue()];
-    }
-    void add(const Color &color) {
-        value[color.getHue()] = true;
-    }
-    void del(const Color &color) {
-        value[color.getHue()] = false;
-    }
-
-    Colorset operator&(const Colorset& other) const {
-        return Colorset(value & other.value);
-    }
-
-    std::vector<std::pair<Color, Color>> findBorders() const {
-        std::vector<std::pair<Color, Color>> areasBorders;
-        
-        if (value[0])
-            areasBorders.push_back({0, 0});
-        for(size_t i = 1; i < 256; i++) {
-            if (value[i]) {
-                if (value[i-1])
-                    areasBorders.back().second = Color(i);
-                else
-                    areasBorders.push_back({Color(i), Color(i)});
-            }
-        }
-        
-        return areasBorders;
-    }
-};
-std::ostream& operator<<(std::ostream& os, const Colorset& cs) {
-    for (int i = 0; i < 256; ++i)
-        os << (cs.get(Color(i)) ? '1' : '0');
+std::ostream& operator<<(std::ostream& os, const Color& c) {
+    os << static_cast<int>(c.getHue());
     return os;
 }
 
 
-class Genome
-{
 
-public:
+Colorset::Colorset() : value() {}
 
-    Color color;
-    Colorset familys;
-    Colorset enemys;
+Colorset::Colorset(const std::bitset<256> &value) : value(value) {}
 
-
-    Genome(const Color &color, const Colorset &familys, const Colorset &enemys) : 
-        color(color), familys(familys), enemys(enemys) {}
-
-
-    Patterns getPattern(const Color cellColor) const {
-        if (enemys.get(cellColor))
-            return Patterns::ENEMY;
-        else if (familys.get(cellColor))
-            return Patterns::FRIEND;
-        return Patterns::NONE;
+Colorset::Colorset(const std::vector<std::pair<Color, Color>> &areas) {
+    for (auto area : areas) {
+        for (Color c = area.first; c < area.second; c = c + 1) {
+            add(Color(c));
+        }
+        add(Color(area.second));
     }
-};
+}
+
+bool Colorset::get(const Color &color) const {
+    return value[color.getHue()];
+}
+
+void Colorset::add(const Color &color) {
+    value[color.getHue()] = true;
+}
+
+void Colorset::del(const Color &color) {
+    value[color.getHue()] = false;
+}
+
+Colorset Colorset::operator&(const Colorset& other) const {
+    return Colorset(value & other.value);
+}
+Colorset Colorset::operator|(const Colorset& other) const {
+    return Colorset(value | other.value);
+}
+
+std::vector<std::pair<Color, Color>> Colorset::findBorders() const {
+    std::vector<std::pair<Color, Color>> areasBorders;
+    
+    if (value[0])
+        areasBorders.push_back({0, 0});
+    for(size_t i = 1; i < 256; i++) {
+        if (value[i]) {
+            if (value[i-1])
+                areasBorders.back().second = Color(i);
+            else
+                areasBorders.push_back({Color(i), Color(i)});
+        }
+    }
+    
+    return areasBorders;
+}
+
+std::ostream& operator<<(std::ostream& os, const Colorset& cs) {
+    auto areas = cs.findBorders();
+    os << "{";
+    for (auto area : areas)
+        os << "[" << area.first << "-" << area.second << "]";
+    os << "}";
+    return os;
+}
 
 
+
+Genome::Genome(const Color &color, const Colorset &familys, const Colorset &enemys) : 
+    color(color), familys(familys), enemys(enemys) {}
+
+Patterns Genome::getPattern(const Color cellColor) const {
+    if (enemys.get(cellColor))
+        return Patterns::ENEMY;
+    else if (familys.get(cellColor))
+        return Patterns::FRIEND;
+    return Patterns::NONE;
+}
+
+std::ostream& operator<<(std::ostream& os, const Genome& g) {
+    os << "c:" << g.color << " f:" << g.familys << " e:" << g.enemys;
+    return os;
+}
+
+
+
+Colorset mergeColorsets(const Colorset& сolorset1, const Colorset& сolorset2)
+{
+    int split = rand() % 256;
+
+    std::bitset<256> mask1;
+    for (int i = 0; i < split; ++i)
+        mask1.set(i);
+    
+    if (rand() % 2)
+        mask1 = ~mask1;
+        
+    std::bitset<256> mask2 = ~mask1;
+
+    return Colorset((сolorset1 & mask1) | (сolorset2 & mask2));
+}
 
 Genome mergeGenomes(const Genome &genome1, const Genome &genome2) 
 {   
     Color newColor = (rand() % 2 ? genome1 : genome2).color;
 
-    Colorset newFamilys = genome1.familys & genome2.familys;
-    Colorset newEnemys = genome1.enemys & genome2.enemys;
+    Colorset newFamilys = mergeColorsets(genome1.familys, genome2.familys);
+    Colorset newEnemys = mergeColorsets(genome1.enemys, genome2.enemys);
   
     return Genome(newColor, newFamilys, newEnemys);
 }
-
 
 Color mutateColor(const Color &oldColor) 
 {
     return oldColor + Color(rand() % 2 ? -1 : 1);
 }
-
 
 Colorset mutateColorset(const Colorset &colorset) 
 {
@@ -199,7 +194,6 @@ Colorset mutateColorset(const Colorset &colorset)
         return colorset;
     }
 }
-
 
 Genome mutateGenome(const Genome &oldGenome) 
 {
