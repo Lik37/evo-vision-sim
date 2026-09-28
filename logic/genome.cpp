@@ -1,8 +1,11 @@
+#include "genome.h"
+
 #include <cstdint>
 #include <bitset>
 #include <random>
 #include <vector>
 #include <utility>
+#include <ostream>
 
 
 enum class Patterns {
@@ -63,9 +66,10 @@ public:
 
     Colorset(const std::vector<std::pair<Color, Color>> &areas) {
         for (auto area : areas) {
-            for (Color color = area.first; color != area.second + 1; color = color + 1) {
-                add(color);
+            for (Color c = area.first; c < area.second; c = c + 1) {
+                add(Color(c));
             }
+            add(Color(area.second));
         }
     }
 
@@ -84,24 +88,28 @@ public:
         return Colorset(value & other.value);
     }
 
-
     std::vector<std::pair<Color, Color>> findBorders() const {
         std::vector<std::pair<Color, Color>> areasBorders;
         
         if (value[0])
             areasBorders.push_back({0, 0});
-        for(size_t i = 0; i < 256 - 1; i++) {
+        for(size_t i = 1; i < 256; i++) {
             if (value[i]) {
-                areasBorders.back().second = i;
-            }
-            else if (value[i+1]) {
-                areasBorders.push_back({i+1, i+1});
+                if (value[i-1])
+                    areasBorders.back().second = Color(i);
+                else
+                    areasBorders.push_back({Color(i), Color(i)});
             }
         }
         
         return areasBorders;
     }
 };
+std::ostream& operator<<(std::ostream& os, const Colorset& cs) {
+    for (int i = 0; i < 256; ++i)
+        os << (cs.get(Color(i)) ? '1' : '0');
+    return os;
+}
 
 
 class Genome
@@ -156,20 +164,28 @@ Colorset mutateColorset(const Colorset &colorset)
         if (rand() % 2) {
             // добавление цвета
             if (rand() % 2) {
-                areasBorders[indArea].first = areasBorders[indArea].first - 1;
+                if (areasBorders[indArea].first != Color(0))
+                    areasBorders[indArea].first = areasBorders[indArea].first - Color(1);
+                else
+                    areasBorders.push_back({Color(255), Color(255)});
             } else {
-                areasBorders[indArea].second = areasBorders[indArea].second + 1;
+                if (areasBorders[indArea].second != Color(255))
+                    areasBorders[indArea].second = areasBorders[indArea].second + Color(1);
+                else
+                    areasBorders.push_back({Color(0), Color(0)});
             }
         } else {
             // удаление цвета
-            if (rand() % 2) {
-                areasBorders[indArea].first = areasBorders[indArea].first + 1;
-            } else {
-                areasBorders[indArea].second = areasBorders[indArea].second - 1;
+            if (areasBorders[indArea].second - areasBorders[indArea].first > 1) {
+                if (rand() % 2) {
+                    areasBorders[indArea].first = areasBorders[indArea].first + 1;
+                } else {
+                    areasBorders[indArea].second = areasBorders[indArea].second - 1;
+                }
             }
             // удаление области
-            if (areasBorders[indArea].first > areasBorders[indArea].second) {
-                areasBorders.erase(indArea);
+            else {
+                areasBorders.erase(areasBorders.begin() + indArea);
             }
         }
 
@@ -177,7 +193,7 @@ Colorset mutateColorset(const Colorset &colorset)
     }
     else
     {
-        Color color = rand();
+        Color color = Color(static_cast<uint8_t>(rand()));
         Colorset colorset;
         colorset.add(color);
         return colorset;
