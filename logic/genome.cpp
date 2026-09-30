@@ -144,43 +144,53 @@ Genome mergeGenomes(const Genome &genome1, const Genome &genome2)
     return Genome(newColor, newFamilys, newEnemys);
 }
 
-Color mutateColor(const Color &oldColor) 
+Color mutateColor(const Color &oldColor, const Color &min, const Color &max) 
 {
-    return oldColor + Color(rand() % 2 ? -1 : 1);
+    const Color deltaColor(min.getHue() + rand()%(max.getHue() - min.getHue() + 1));
+    if (rand() % 2)
+        return oldColor + deltaColor;
+    else
+        return oldColor - deltaColor;
 }
 
-Colorset mutateColorset(const Colorset &colorset) 
-{
+Colorset mutateColorset(const Colorset &colorset, const Color &min, const Color &max) 
+{   
     auto areasBorders = colorset.findBorders();
-    if (areasBorders.size()) 
-    {
-        size_t indArea = rand() % areasBorders.size();
 
+    if ( !(areasBorders.empty()) ) 
+    {
+        const size_t indArea = rand() % areasBorders.size();
+        const Color deltaColor(min.getHue() + rand()%(max.getHue() - min.getHue() + 1));
+
+        // добавление цвета
         if (rand() % 2) {
-            // добавление цвета
             if (rand() % 2) {
-                if (areasBorders[indArea].first != Color(0))
-                    areasBorders[indArea].first = areasBorders[indArea].first - Color(1);
-                else
-                    areasBorders.push_back({Color(255), Color(255)});
-            } else {
-                if (areasBorders[indArea].second != Color(255))
-                    areasBorders[indArea].second = areasBorders[indArea].second + Color(1);
-                else
-                    areasBorders.push_back({Color(0), Color(0)});
-            }
-        } else {
-            // удаление цвета
-            if (areasBorders[indArea].second - areasBorders[indArea].first > 1) {
-                if (rand() % 2) {
-                    areasBorders[indArea].first = areasBorders[indArea].first + 1;
+                if (areasBorders[indArea].first >= deltaColor) {
+                    areasBorders[indArea].first = areasBorders[indArea].first - deltaColor;
                 } else {
-                    areasBorders[indArea].second = areasBorders[indArea].second - 1;
+                    areasBorders.push_back({areasBorders[indArea].first - deltaColor, Color(255)});
+                    areasBorders[indArea].first = Color(0);
+                }
+            } else {
+                if (areasBorders[indArea].second <= Color(255) - deltaColor) {
+                    areasBorders[indArea].second = areasBorders[indArea].second + deltaColor;
+                } else {
+                    areasBorders.push_back({Color(0), areasBorders[indArea].second + deltaColor});
+                    areasBorders[indArea].second = Color(255);
                 }
             }
-            // удаление области
-            else {
-                areasBorders.erase(areasBorders.begin() + indArea);
+        // удаление цвета
+        } else {
+            if (areasBorders[indArea].second - areasBorders[indArea].first > deltaColor) {
+                if (rand() % 2) {
+                    areasBorders[indArea].first = areasBorders[indArea].first + deltaColor;
+                } else {
+                    areasBorders[indArea].second = areasBorders[indArea].second - deltaColor;
+                }
+            // удаление
+            } else {
+                areasBorders[indArea] = areasBorders.back();
+                areasBorders.pop_back();
             }
         }
 
@@ -195,18 +205,18 @@ Colorset mutateColorset(const Colorset &colorset)
     }
 }
 
-Genome mutateGenome(const Genome &oldGenome) 
+Genome mutateGenome(const Genome &oldGenome, const Color &min, const Color &max) 
 {
     if (rand() % 2) {
         // мутация цвета
-        return Genome(mutateColor(oldGenome.color), oldGenome.familys, oldGenome.enemys);
+        return Genome(mutateColor(oldGenome.color, min, max), oldGenome.familys, oldGenome.enemys);
     } 
     else {
         // мутация зрения      
         if (rand() % 2) {
-            return Genome(oldGenome.color, mutateColorset(oldGenome.familys), oldGenome.enemys);
+            return Genome(oldGenome.color, mutateColorset(oldGenome.familys, min, max), oldGenome.enemys);
         } else {
-            return Genome(oldGenome.color, oldGenome.familys, mutateColorset(oldGenome.enemys));
+            return Genome(oldGenome.color, oldGenome.familys, mutateColorset(oldGenome.enemys, min, max));
         }
     }
 }

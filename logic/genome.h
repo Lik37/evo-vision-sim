@@ -70,6 +70,17 @@ std::ostream& operator<<(std::ostream& os, const Genome& g);
 Colorset mergeColorsets(const Colorset& сolorset1, const Colorset& сolorset2);
 Genome mergeGenomes(const Genome& genome1, const Genome& genome2);
 
-Color  mutateColor(const Color& oldColor);
-Colorset mutateColorset(const Colorset& colorset);
-Genome mutateGenome(const Genome& oldGenome);
+Color mutateColor(const Color &oldColor, const Color &min, const Color &max);
+Color mutateColor(const Color &oldColor, const Color &max = Color(1)) { 
+    return mutateColor(oldColor, Color(1), max);
+}
+
+Colorset mutateColorset(const Colorset &colorset, const Color &min, const Color &max);
+Colorset mutateColorset(const Colorset &colorset, const Color &max = Color(1)) {
+    return mutateColorset(colorset, Color(1), max); 
+}
+
+Genome mutateGenome(const Genome& oldGenome, const Color &min, const Color &max);
+Genome mutateGenome(const Genome& oldGenome, const Color &max = Color(1)) {
+    return mutateGenome(oldGenome, Color(1), max); 
+}
