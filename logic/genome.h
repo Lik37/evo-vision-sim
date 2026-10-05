@@ -1,5 +1,8 @@
 #pragma once
 
+#include "color.h"
+#include "colorset.h"
+
 #include <cstdint>
 #include <bitset>
 #include <vector>
@@ -8,49 +11,6 @@
 
 
 enum class Patterns { NONE, FRIEND, ENEMY };
-
-
-class Color
-{
-    uint8_t hue;
-
-public:
-    Color(uint8_t hue);
-
-    uint8_t getHue() const;
-
-    bool operator==(const Color& other) const;
-    bool operator!=(const Color& other) const;
-    bool operator< (const Color& other) const;
-    bool operator> (const Color& other) const;
-    bool operator<=(const Color& other) const;
-    bool operator>=(const Color& other) const;
-
-    Color operator+(const Color& other) const;
-    Color operator-(const Color& other) const;
-};
-std::ostream& operator<<(std::ostream& os, const Color& c);
-
-
-class Colorset
-{
-    std::bitset<256> value;
-
-public:
-    Colorset();
-    Colorset(const std::bitset<256>& value);
-    Colorset(const std::vector<std::pair<Color, Color>>& areas);
-
-    bool get(const Color& color) const;
-    void add(const Color& color);
-    void del(const Color& color);
-
-    Colorset operator&(const Colorset& other) const;
-    Colorset operator|(const Colorset& other) const;
-
-    std::vector<std::pair<Color, Color>> findBorders() const;
-};
-std::ostream& operator<<(std::ostream& os, const Colorset& cs);
 
 
 class Genome
